@@ -17,6 +17,7 @@ const mutations = {
     state.reduceButton = val;
   },
   UPDATE_MAIN_LAYOUT_TYPE(state, val) {
+    console.log(val);
     state.mainLayoutType = val;
   },
   UPDATE_VERTICAL_NAV_MENU_ITEMS_MIN(state, val) {

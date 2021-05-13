@@ -58,7 +58,7 @@ const state = {
   AppSavedAccount: accountInfoLocalStorage, // Remember Me at Login page
   bodyOverlay: false,
   isVerticalNavMenuActive: true,
-  mainLayoutType: themeConfig.mainLayoutType || "vertical",
+  mainLayoutType: themeConfig.mainLayoutType || "horizontal",
   navbarSearchAndPinList: navbarSearchAndPinList,
   reduceButton: themeConfig.sidebarCollapsed,
   verticalNavMenuWidth: "default",

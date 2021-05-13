@@ -8,7 +8,7 @@
   <footer class="the-footer flex-wrap justify-between" :class="classes">
     <span
       >COPYRIGHT &copy; {{ new Date().getFullYear() }}
-      <a href="" target="_blank" rel="nofollow">Totodo</a>, All rights
+      <a href="" target="_blank" rel="nofollow">SuperCoin</a>, All rights
       Reserved</span
     >
     <span class="md:flex hidden items-center">

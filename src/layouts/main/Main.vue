@@ -23,7 +23,7 @@
       "
     /> -->
 
-    <the-customizer
+    <!-- <the-customizer
       v-if="!disableCustomizer"
       :footerType="footerType"
       :hideScrollToTop="hideScrollToTop"
@@ -35,11 +35,11 @@
       @updateNavbar="updateNavbar"
       @updateNavbarColor="updateNavbarColor"
       @updateRouterTransition="updateRouterTransition"
-    />
+    /> -->
 
     <v-nav-menu
       :navMenuItems="navMenuItems"
-      title="Totodo"
+      title="SuperCoin"
       parent=".layout--main"
     />
 
