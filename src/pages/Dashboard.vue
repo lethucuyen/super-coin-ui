@@ -238,6 +238,8 @@
 </template>
 
 <script>
+import CryptoService from "../services/CryptoService";
+
 export default {
   computed: {
     avtColor() {
@@ -249,7 +251,6 @@ export default {
   },
   data() {
     return {
-      isSelected: true,
       card_bg_img_1: require("@/assets/images/pages/card-bg-image-demo-1.jpg"),
       card_bg_img_2: require("@/assets/images/pages/card-bg-image-demo-2.jpg"),
       unconfirmed_transactions: null,
@@ -280,7 +281,13 @@ export default {
     };
   },
   methods: {
-    addPeer() {},
+    async addPeer() {
+      try {
+        await CryptoService.testService();
+      } catch (e) {
+        console.log(e);
+      }
+    },
     selectPeer() {},
     pay() {}
   }
@@ -298,9 +305,7 @@ export default {
   background-color: #d2eafb;
 }
 .selected-peer {
-  // position: fixed;
   bottom: 5%;
-  // right: 79px;
   z-index: 51000;
   box-shadow: 0 1px 20px 1px rgb(146, 88, 255);
 }
