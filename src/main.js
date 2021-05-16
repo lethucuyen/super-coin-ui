@@ -44,6 +44,10 @@ import "@/assets/css/main.css";
 // Vue Router
 import router from "./router";
 
+// Connect Socket.io
+import socket from "./socket";
+Vue.use(socket);
+
 // Vuex Store
 import store from "./store/store";
 
