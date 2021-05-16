@@ -36,7 +36,7 @@
           <div class="m-6">
             <MineNewBlock
               :unconfirmed_txs="profile.unconfirmed_txs"
-              @mine="mine()"
+              @mine="mine($event)"
             />
           </div>
         </div>
@@ -45,7 +45,7 @@
           <WalletInfoCard class="m-6" :balance="profile.balance" />
         </div>
         <div class="vx-col w-full lg:w-1/3 xl:w-1/3 mb-base">
-          <AddTransaction class="m-6" />
+          <AddTransaction class="m-6" @pay="pay($event)" />
         </div>
       </div>
       <vs-divider />
@@ -108,22 +108,20 @@ export default {
       }
     },
     selectPeer() {},
-    pay() {},
+    pay(submitData) {},
     mine(submitData) {
-      if (!submitData) {
-        // console.log(submitData);
-        const postData = {
-          type: MessageTypeEnum.MINE_NEW_BLOCK,
-          payload: submitData
-        };
-        this.$socket.emit("data", JSON.stringify(postData));
-        this.$socket.on("data", message => {
-          console.log(message);
-          this.handleIncomingMsg(message);
-        });
-      }
+      // console.log(submitData);
+      const postData = {
+        type: MessageTypeEnum.MINE_NEW_BLOCK,
+        payload: submitData
+      };
+      this.$socket.emit("data", JSON.stringify(postData));
+      this.$socket.on("data", message => {
+        this.handleIncomingMsg(message);
+      });
     },
     handleIncomingMsg(message) {
+      // console.log(message);
       const msg = JSON.parse(message);
       switch (msg.type) {
         case MessageTypeEnum.REQUEST_PROFILE:
