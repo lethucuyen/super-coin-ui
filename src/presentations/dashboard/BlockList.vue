@@ -1,8 +1,11 @@
 <template>
   <div id="block-list">
-    <div v-for="(el, index) in 3" :key="index" class="mb-4 px-6">
+    <div v-for="(el, index) in blocks" :key="index" class="mb-4 px-6">
       <vx-card>
-        <vs-table v-if="index != 0" :data="transactions">
+        <vs-table
+          v-if="index != 0"
+          :data="displayTransactions(el.transactions)"
+        >
           <template slot="thead">
             <vs-th class="text-sm font-medium">
               <feather-icon
@@ -61,15 +64,15 @@
         </vs-table>
         <div v-if="index != 0" class="w-full mt-5 text-sm">
           PREVIOUS HASH
-          <span class="text-xs text-success ml-4"
-            >000231f48b131b1c721b508434cdbf308b0ae7c1a7f6a5ed7db56a34c76c9530</span
-          >
+          <span class="text-xs text-success ml-4">
+            {{ el.previousHash }}
+          </span>
         </div>
         <div class="w-full mt-3 text-sm">
           HASH
           <span
             class="text-xs text-success border-2 border-solid border-success rounded bg-success-light p-1 ml-4"
-            >000231f48b131b1c721b508434cdbf308b0ae7c1a7f6a5ed7db56a34c76c9530</span
+            >{{ el.hash }}</span
           >
         </div>
         <div class="flex justify-between items-center mt-5">
@@ -82,7 +85,7 @@
           <div class="text-xs">
             NONCE:
             <span class="border-solid border-2 border-grey rounded text-sm p-1">
-              3285
+              {{ el.nonce }}
             </span>
           </div>
         </div>
@@ -97,30 +100,33 @@
 
 <script>
 export default {
+  props: {
+    peers: { type: Array, default: () => [] },
+    blocks: { type: Array, default: () => [] }
+  },
   data() {
     return {
-      transactions: [
-        {
-          id: 1,
-          from: "🏆 REWARD",
-          to: "Susan",
-          amount: "10",
-          status: "unspent"
-        }
-      ]
+      // transactionsDummy: [
+      //   {
+      //     id: 1,
+      //     from: "🏆 REWARD",
+      //     to: "Susan",
+      //     amount: "10",
+      //     status: "unspent"
+      //   }
+      // ]
     };
   },
-  created() {
-    const postData = {
-      type: "REQUEST_BLOCKCHAIN"
-    };
-    this.$socket.emit("data", postData);
-    // <TODO>
-    this.$socket.on("data", message => {
-      console.log("Blockchain:");
-      console.log([JSON.parse(message)]);
-    });
-    // </TODO>
+  computed: {
+    displayTransactions() {
+      return transactions =>
+        transactions.map(transaction => ({
+          from: transaction.from,
+          to: this.peers.filter(peer => peer.address == transaction.to),
+          amount: transaction.amount,
+          status: transaction.status
+        }));
+    }
   }
 };
 </script>

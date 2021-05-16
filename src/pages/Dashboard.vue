@@ -30,113 +30,31 @@
 
     <vs-divider />
 
-    <div class="flex">
-      <vx-card
-        class="card-overlay bg-cover m-6 p-4"
-        title-color="#fff"
-        content-color="#fff"
-        :card-background="
-          'linear-gradient(120deg ,rgba(247,97,161,0.5), rgba(140,27,171,.8)), url(' +
-            card_bg_img_2 +
-            ')'
-        "
-      >
-        UNCONFIRMED TRANSACTIONS:
-        <v-select
-          placeholder="Please select a transaction to mine"
-          class="bg-white text-grey"
-          v-model="unconfirmed_transactions"
-          :options="unconfirmed_transactions_choices"
-        />
-        <br />
-        <br />
-        <vs-button class="bg-danger" icon-pack="feather" icon="icon-codepen"
-          >MINE NEW BLOCK</vs-button
-        >
-      </vx-card>
-      <vx-card
-        class="card-overlay bg-cover m-6 text-center"
-        title-color="#fff"
-        content-color="#fff"
-        :card-background="
-          'linear-gradient(120deg ,rgba(109,213,237,.8), rgba(33,147,176,0.5)), url(' +
-            card_bg_img_1 +
-            ')'
-        "
-      >
-        <div class="border-solid border-white rounded p-5">
-          <div class="text-5xl">300</div>
-          <div class="text-2xl">BALANCE</div>
-        </div>
-        <feather-icon icon="FeatherIcon" class="mt-5" />
-      </vx-card>
-      <vx-card
-        class="m-6"
-        title-color="#fff"
-        content-color="#fff"
-        card-background="linear-gradient(120deg, #7f7fd5, #86a8e7, #91eae4)"
-      >
-        <div style="height: 330px">
-          <div class="w-full">
-            <label>RECIPIENT:</label>
-            <v-select
-              placeholder="Peer"
-              class="bg-white text-grey"
-              v-model="peer"
-              :options="peer_choices"
+    <div v-if="profile">
+      <div class="vx-row">
+        <div class="vx-col w-full lg:w-1/3 xl:w-1/3 mb-base">
+          <div class="m-6">
+            <MineNewBlock
+              :unconfirmed_txs="profile.unconfirmed_txs"
+              @mine="mine()"
             />
           </div>
-
-          <div class="w-full mt-5">
-            <label>AMOUNT / FEE:</label>
-            <div class="w-full flex">
-              <vs-input-number
-                class="w-1/2"
-                color="dark"
-                :step="20"
-                v-model="amount"
-              />
-              <vs-input-number
-                class="w-1/2"
-                color="dark"
-                :step="20"
-                v-model="fee"
-              />
-            </div>
-            <!-- <small class="opacity-75">Insufficient balance!</small> -->
-          </div>
-
-          <div class="w-full mt-5">
-            <label>FUNDS:</label>
-            <v-select
-              placeholder="Inputs"
-              class="bg-white text-grey"
-              multiple
-              :closeOnSelect="false"
-              v-model="funds"
-              :options="fund_choices"
-            />
-            <!-- <small class="opacity-75">Insufficient funds!</small> -->
-          </div>
-
-          <vs-divider />
-
-          <vs-button
-            class="bg-dark-gradient mt-5"
-            icon-pack="feather"
-            icon="icon-feather"
-            @click="pay()"
-            >PAY</vs-button
-          >
         </div>
-      </vx-card>
-    </div>
-    <vs-divider />
-    <div class="text-center text-5xl p-8">BLOCKCHAIN</div>
 
-    <div class="flex flex-row items-center justify-center mt-6">
-      <div class="w-1/2 flex-col">
-        <BlockList />
+        <div class="vx-col w-full lg:w-1/3 xl:w-1/3 mb-base">
+          <WalletInfoCard class="m-6" :balance="profile.balance" />
+        </div>
+        <div class="vx-col w-full lg:w-1/3 xl:w-1/3 mb-base">
+          <AddTransaction class="m-6" />
+        </div>
+      </div>
+      <vs-divider />
+      <div class="text-center text-5xl p-8">BLOCKCHAIN</div>
+
+      <div class="flex flex-row items-center justify-center mt-6">
+        <div class="w-1/2 flex-col">
+          <BlockList :blocks="profile.chain" />
+        </div>
       </div>
     </div>
   </div>
@@ -144,10 +62,14 @@
 
 <script>
 import CryptoService from "../services/CryptoService";
+import { MessageTypeEnum } from "../constants/enums";
 import BlockList from "../presentations/dashboard/BlockList";
+import WalletInfoCard from "../presentations/dashboard/WalletInfoCard";
+import MineNewBlock from "../presentations/dashboard/MineNewBlock";
+import AddTransaction from "../presentations/dashboard/AddTransaction";
 
 export default {
-  components: { BlockList },
+  components: { BlockList, WalletInfoCard, MineNewBlock, AddTransaction },
   computed: {
     avtColor() {
       return isSelected => {
@@ -158,25 +80,24 @@ export default {
   },
   data() {
     return {
-      card_bg_img_1: require("@/assets/images/pages/card-bg-image-demo-1.jpg"),
-      card_bg_img_2: require("@/assets/images/pages/card-bg-image-demo-2.jpg"),
-      unconfirmed_transactions: null,
-      unconfirmed_transactions_choices: ["150/0 Mandy to Susan"],
-      peer: null,
-      peer_choices: ["Christian", "Susan"],
-      amount: 0,
-      fee: 0,
-      funds: [],
-      fund_choices: [
-        { id: 0, label: "$100 from Mining" },
-        { id: 1, label: "$100 from Mining" }
-      ],
+      profile: null,
       peers: [
         { name: "Mandy", isSelected: true },
         { name: "Christian", isSelected: false },
         { name: "Susan", isSelected: false }
       ]
     };
+  },
+  created() {
+    const postData = {
+      type: "REQUEST_PROFILE"
+    };
+    this.$socket.emit("data", JSON.stringify(postData));
+    // <TODO>
+    this.$socket.on("data", message => {
+      this.handleIncomingMsg(message);
+    });
+    // </TODO>
   },
   methods: {
     async addPeer() {
@@ -187,7 +108,33 @@ export default {
       }
     },
     selectPeer() {},
-    pay() {}
+    pay() {},
+    mine(submitData) {
+      if (!submitData) {
+        // console.log(submitData);
+        const postData = {
+          type: MessageTypeEnum.MINE_NEW_BLOCK,
+          payload: submitData
+        };
+        this.$socket.emit("data", JSON.stringify(postData));
+        this.$socket.on("data", message => {
+          console.log(message);
+          this.handleIncomingMsg(message);
+        });
+      }
+    },
+    handleIncomingMsg(message) {
+      const msg = JSON.parse(message);
+      switch (msg.type) {
+        case MessageTypeEnum.REQUEST_PROFILE:
+          console.log(MessageTypeEnum.REQUEST_PROFILE);
+          console.log(msg);
+          this.profile = msg.payload;
+          break;
+        default:
+          break;
+      }
+    }
   }
 };
 </script>
