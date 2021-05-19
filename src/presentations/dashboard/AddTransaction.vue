@@ -11,8 +11,9 @@
           <v-select
             placeholder="Peer"
             class="bg-white text-grey"
-            v-model="peer"
-            :options="peer_choices"
+            v-model="submitData.peer"
+            :options="otherPeers"
+            label="name"
           />
         </div>
 
@@ -23,13 +24,13 @@
               class="w-1/2"
               color="dark"
               :step="20"
-              v-model="amount"
+              v-model="submitData.amount"
             />
             <vs-input-number
               class="w-1/2"
               color="dark"
-              :step="20"
-              v-model="fee"
+              :step="5"
+              v-model="submitData.fee"
             />
           </div>
           <!-- <small class="opacity-75">Insufficient balance!</small> -->
@@ -42,8 +43,9 @@
             class="bg-white text-grey"
             multiple
             :closeOnSelect="false"
-            v-model="funds"
+            v-model="submitData.funds"
             :options="fund_choices"
+            label="label"
           />
           <!-- <small class="opacity-75">Insufficient funds!</small> -->
         </div>
@@ -54,7 +56,7 @@
           class="bg-dark-gradient mt-5"
           icon-pack="feather"
           icon="icon-feather"
-          @click="$emit('pay', submitData)"
+          @click="onSubmit(submitData)"
           >PAY</vs-button
         >
       </div>
@@ -64,19 +66,52 @@
 
 <script>
 export default {
+  props: {
+    unspentInputs: { type: Array, default: () => [] },
+    otherPeers: { type: Array, default: () => [] }
+  },
   data() {
     return {
-      submitData: null,
-      peer: null,
-      peer_choices: ["Christian", "Susan"],
-      amount: 0,
-      fee: 0,
-      funds: [],
-      fund_choices: [
-        { id: 0, label: "$100 from Mining" },
-        { id: 1, label: "$100 from Mining" }
-      ]
+      submitData: {
+        peer: null,
+        amount: 0,
+        fee: 0,
+        funds: []
+      },
+      peer_choices: ["Christian", "Susan"]
+      // fund_choices: [
+      //   { id: 0, label: "$100 from Mining" },
+      //   { id: 1, label: "$100 from Mining" }
+      // ]
     };
+  },
+  computed: {
+    fund_choices() {
+      console.log("Unspent Inputs:");
+      console.log(this.unspentInputs);
+      console.log(
+        this.unspentInputs.map((unspent, index) => ({
+          id: index,
+          label: `${unspent.amount} coins from Todo`,
+          value: unspent
+        }))
+      );
+      return this.unspentInputs.map((unspent, index) => ({
+        id: index,
+        label: `${unspent.amount} coins from Todo`,
+        value: unspent
+      }));
+    }
+    // fundLabel() {
+    //   return unspent => {
+    //     return `${unspent.amount} coins from Todo on ${unspent.timestamp}`;
+    //   };
+    // }
+  },
+  methods: {
+    onSubmit(submitData) {
+      this.$emit("pay", submitData);
+    }
   }
 };
 </script>

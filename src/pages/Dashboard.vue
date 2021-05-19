@@ -10,14 +10,17 @@
         >
           <vs-avatar
             size="60px"
-            :color="avtColor(el.isSelected)"
-            :class="['m-0 ', { 'selected-peer': el.isSelected }]"
+            :color="avtColor(el.address === profile.address)"
+            :class="[
+              'm-0 ',
+              { 'selected-peer': el.address === profile.address }
+            ]"
             @click="selectPeer()"
           />
           <p
             :class="[
               'font-medium mt-1',
-              el.isSelected ? 'text-primary' : 'text-grey'
+              el.address == profile.address ? 'text-primary' : 'text-grey'
             ]"
           >
             {{ el.name }}
@@ -45,7 +48,12 @@
           <WalletInfoCard class="m-6" :balance="profile.balance" />
         </div>
         <div class="vx-col w-full lg:w-1/3 xl:w-1/3 mb-base">
-          <AddTransaction class="m-6" @pay="pay($event)" />
+          <AddTransaction
+            class="m-6"
+            :otherPeers="otherPeers"
+            :unspentInputs="profile.unspentInputs"
+            @pay="pay($event)"
+          />
         </div>
       </div>
       <vs-divider />
@@ -67,6 +75,7 @@ import BlockList from "../presentations/dashboard/BlockList";
 import WalletInfoCard from "../presentations/dashboard/WalletInfoCard";
 import MineNewBlock from "../presentations/dashboard/MineNewBlock";
 import AddTransaction from "../presentations/dashboard/AddTransaction";
+import { uuid } from "uuidv4";
 
 export default {
   components: { BlockList, WalletInfoCard, MineNewBlock, AddTransaction },
@@ -74,32 +83,61 @@ export default {
     avtColor() {
       return isSelected => {
         if (isSelected) return "primary";
-        return "warning";
+        return "grey";
       };
+    },
+    otherPeers() {
+      return this.peers.filter(peer => peer.id !== this.profile.id);
     }
   },
   data() {
     return {
       profile: null,
-      peers: [
-        { name: "Mandy", isSelected: true },
-        { name: "Christian", isSelected: false },
-        { name: "Susan", isSelected: false }
-      ]
+      peers: []
     };
   },
   created() {
-    const postData = {
-      type: "REQUEST_PROFILE"
-    };
-    this.$socket.emit("data", JSON.stringify(postData));
-    // <TODO>
-    this.$socket.on("data", message => {
-      this.handleIncomingMsg(message);
-    });
-    // </TODO>
+    this.requestSocketNewWallet();
+    this.requestSocketProfile();
+    this.requestSocketPeers();
+    this.listenSocketMsgs();
+
+    // this.$socket.emit("error", "This is an error");
   },
   methods: {
+    requestSocketNewWallet() {
+      const passwordGenerator = uuid();
+      console.log("generate password");
+      console.log([passwordGenerator]);
+      this.$socket.emit(
+        "data",
+        JSON.stringify({
+          type: MessageTypeEnum.REQUEST_NEW_WALLET,
+          payload: { password: passwordGenerator }
+        })
+      );
+    },
+    requestSocketProfile() {
+      this.$socket.emit(
+        "data",
+        JSON.stringify({
+          type: MessageTypeEnum.REQUEST_PROFILE
+        })
+      );
+    },
+    requestSocketPeers() {
+      this.$socket.emit(
+        "data",
+        JSON.stringify({
+          type: MessageTypeEnum.REQUEST_PEERS
+        })
+      );
+    },
+    listenSocketMsgs() {
+      this.$socket.on("data", message => {
+        this.handleIncomingMsg(message);
+      });
+    },
     async addPeer() {
       try {
         await CryptoService.testService();
@@ -108,7 +146,9 @@ export default {
       }
     },
     selectPeer() {},
-    pay(submitData) {},
+    pay(submitData) {
+      console.log(submitData);
+    },
     mine(submitData) {
       // console.log(submitData);
       const postData = {
@@ -116,18 +156,31 @@ export default {
         payload: submitData
       };
       this.$socket.emit("data", JSON.stringify(postData));
-      this.$socket.on("data", message => {
-        this.handleIncomingMsg(message);
-      });
     },
     handleIncomingMsg(message) {
-      // console.log(message);
       const msg = JSON.parse(message);
       switch (msg.type) {
+        case MessageTypeEnum.REQUEST_NEW_WALLET:
+          console.log("-->", MessageTypeEnum.REQUEST_NEW_WALLET);
+          console.log(msg);
+          break;
+        case MessageTypeEnum.REQUEST_LATEST_BLOCK:
+          console.log(MessageTypeEnum.REQUEST_LATEST_BLOCK);
+          // this.uploadSocketLatestBlock();
+          break;
+        case MessageTypeEnum.REQUEST_TRANSACTIONS:
+          console.log(MessageTypeEnum.REQUEST_TRANSACTIONS);
+          // this.uploadSocketTransaction();
+          break;
         case MessageTypeEnum.REQUEST_PROFILE:
           console.log(MessageTypeEnum.REQUEST_PROFILE);
           console.log(msg);
           this.profile = msg.payload;
+          break;
+        case MessageTypeEnum.REQUEST_PEERS:
+          console.log(MessageTypeEnum.REQUEST_PEERS);
+          console.log(msg);
+          this.peers = msg.payload || [];
           break;
         default:
           break;
@@ -149,7 +202,7 @@ export default {
 }
 .selected-peer {
   bottom: 5%;
-  z-index: 51000;
+  // z-index: 51000;
   box-shadow: 0 1px 20px 1px rgb(146, 88, 255);
 }
 </style>
